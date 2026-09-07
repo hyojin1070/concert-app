@@ -4,12 +4,12 @@
 //
 // 값을 채우기 전까지 index.html은 내장된 기본 목록으로 동작합니다.
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDFeTf9-X5-wtg_WreVC5RF-cENys40PNQ",
+  authDomain: "concert-app-cf003.firebaseapp.com",
+  projectId: "concert-app-cf003",
+  storageBucket: "concert-app-cf003.firebasestorage.app",
+  messagingSenderId: "285326863515",
+  appId: "1:285326863515:web:25991518ed88310375ea3e"
 };
 
 // 관리자 페이지(admin.html) 접속 시 입력해야 하는 비밀번호.
