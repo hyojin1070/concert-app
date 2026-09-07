@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>이번 시즌 공연 — 콘서트 리스트</title>
+<meta name="theme-color" content="#17131c">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #17131c;
+    --surface: #1f1926;
+    --surface-2: #251e2e;
+    --line: #3a3145;
+    --ink: #f4efe9;
+    --ink-dim: #a79bb0;
+    --gold: #e3b23c;
+    --coral: #e8604a;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:
+      radial-gradient(1100px 480px at 12% -10%, rgba(227,178,60,0.14), transparent 60%),
+      radial-gradient(900px 420px at 100% 0%, rgba(232,96,74,0.10), transparent 55%),
+      var(--bg);
+    color: var(--ink);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+  }
+  a{ color:inherit; }
+
+  .wrap{
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+  }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    border-bottom: 1px dashed var(--line);
+    padding-bottom: 32px;
+    margin-bottom: 32px;
+  }
+  .eyebrow{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--gold);
+    letter-spacing: 0.02em;
+    margin: 0 0 10px;
+  }
+  h1{
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: clamp(34px, 6vw, 56px);
+    line-height: 1.08;
+    margin: 0 0 14px;
+    letter-spacing: -0.01em;
+  }
+  h1 span{ color: var(--coral); }
+  .hero p{
+    color: var(--ink-dim);
+    font-size: 15px;
+    line-height: 1.7;
+    max-width: 56ch;
+    margin: 0;
+  }
+
+  /* ---------- Controls ---------- */
+  .controls{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items:center;
+    margin-bottom: 28px;
+  }
+  .search{
+    flex: 1 1 220px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 11px 14px;
+    color: var(--ink);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+  }
+  .search::placeholder{ color: #6f6579; }
+  .search:focus{ outline: 2px solid var(--gold); outline-offset: 1px; }
+
+  .chips{ display:flex; flex-wrap:wrap; gap: 8px; }
+  .chip{
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink-dim);
+    padding: 9px 14px;
+    border-radius: 999px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color .15s ease, color .15s ease, background .15s ease;
+  }
+  .chip:hover{ border-color: var(--gold); color: var(--ink); }
+  .chip:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  .chip.active{
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #1c1610;
+  }
+
+  .install-btn{
+    margin-left: auto;
+    background: var(--coral);
+    border: 1px solid var(--coral);
+    color: #1c1610;
+    padding: 9px 14px;
+    border-radius: 999px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .install-btn:hover{ filter: brightness(1.06); }
+
+  /* ---------- List ---------- */
+  .count{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-dim);
+    margin: 0 0 6px;
+  }
+  .list{
+    border-top: 1px dashed var(--line);
+  }
+  .row{
+    display:grid;
+    grid-template-columns: 84px 1px 1fr auto;
+    gap: 20px;
+    align-items: center;
+    padding: 22px 0;
+    border-bottom: 1px dashed var(--line);
+  }
+  .row.past{ opacity: 0.42; }
+
+  .date-block{
+    font-family: 'IBM Plex Mono', monospace;
+    text-align: center;
+    line-height: 1.1;
+  }
+  .date-block .day{
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--gold);
+  }
+  .date-block .mon{
+    font-size: 11px;
+    color: var(--ink-dim);
+    letter-spacing: 0.06em;
+    margin-top: 2px;
+  }
+
+  .perf{
+    width: 1px;
+    height: 100%;
+    background-image: linear-gradient(var(--line) 60%, transparent 0%);
+    background-size: 1px 8px;
+    background-repeat: repeat-y;
+  }
+
+  .info h3{
+    font-family: 'Black Han Sans', sans-serif;
+    font-weight: 400;
+    font-size: 20px;
+    letter-spacing: -0.005em;
+    margin: 0 0 6px;
+  }
+  .meta{
+    font-size: 13px;
+    color: var(--ink-dim);
+    display:flex;
+    flex-wrap:wrap;
+    gap: 4px 10px;
+    margin-bottom: 8px;
+  }
+  .meta .dot::before{ content:"·"; margin-right: 10px; color: var(--line); }
+  .tag{
+    display:inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--ink-dim);
+    border: 1px solid var(--line);
+  }
+  .lineup{
+    font-size: 12.5px;
+    color: var(--ink-dim);
+    margin-top: 8px;
+    line-height: 1.6;
+  }
+
+  .side{
+    text-align: right;
+    white-space: nowrap;
+  }
+  .dday{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--coral);
+  }
+  .dday.done{ color: var(--ink-dim); font-weight: 500; }
+
+  .empty{
+    padding: 60px 0;
+    text-align: center;
+    color: var(--ink-dim);
+    font-size: 14px;
+  }
+
+  footer{
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px dashed var(--line);
+    font-size: 12px;
+    color: #6f6579;
+    line-height: 1.7;
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 620px){
+    .wrap{ padding: 40px 18px 60px; }
+    .row{
+      grid-template-columns: 56px 1px 1fr;
+      row-gap: 8px;
+    }
+    .side{
+      grid-column: 3 / 4;
+      text-align: left;
+      margin-top: 2px;
+    }
+    .date-block .day{ font-size: 21px; }
+    .info h3{ font-size: 17px; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="hero">
+      <p class="eyebrow">CONCERT LIST — 2026 SEASON</p>
+      <h1>다가오는 <span>공연</span>을<br>한눈에</h1>
+      <p>스타디움 공연부터 가을 페스티벌까지, 이번 시즌 주요 콘서트 일정을 모았습니다. 검색하거나 장르 태그로 좁혀보세요.</p>
+    </div>
+
+    <div class="controls">
+      <input class="search" id="searchInput" type="text" placeholder="아티스트, 공연장으로 검색" />
+      <div class="chips" id="chips"></div>
+      <button class="install-btn" id="installBtn" hidden>+ 홈 화면에 추가</button>
+    </div>
+
+    <p class="count" id="count"></p>
+    <div class="list" id="list"></div>
+
+    <footer>
+      실제 티켓 오픈 공지를 바탕으로 정리한 참고용 목록이며, 정확한 좌석·가격·취소 규정은 각 공연 공식 예매처에서 확인하세요.
+    </footer>
+  </div>
+
+<script>
+  const CONCERTS = [
+    {
+      title: "2026 임영웅 콘서트 [IM HERO – THE STADIUM 2]",
+      start: "2026-09-04",
+      end: "2026-09-06",
+      venue: "고양종합운동장 주경기장",
+      genre: "발라드 · 트로트",
+      genreKey: "ballad",
+      note: "3일 전석 지정석 · NOL 티켓 단독 판매"
+    },
+    {
+      title: "Vaundy ASIA ARENA TOUR 2026 「HORO」 IN SEOUL",
+      start: "2026-09-19",
+      end: "2026-09-20",
+      venue: "인천 인스파이어 아레나",
+      genre: "내한공연",
+      genreKey: "overseas",
+      note: "일본 아티스트 Vaundy 아시아 투어 서울 공연"
+    },
+    {
+      title: "2026 Asia Top Artist Festival",
+      start: "2026-09-19",
+      end: "2026-09-20",
+      venue: "난지한강공원",
+      genre: "페스티벌",
+      genreKey: "festival",
+      note: "국내 최대 규모 K-팝 야외 페스티벌",
+      lineup: "CNBLUE · WOODZ · 다이나믹 듀오 · 카더가든 · LUCY · 에이티즈 · 잔나비 · 어반자카파 · 이무진 · 최예나"
+    },
+    {
+      title: "2026 잔다라 페스타",
+      start: "2026-09-04",
+      end: "2026-09-06",
+      venue: "장소 추후 공지",
+      genre: "인디 · 포크",
+      genreKey: "indie",
+      note: "가을 인디 음악 페스티벌",
+      lineup: "브로콜리너마저 · 팔칠댄스 · 김뜻돌 · 두억시니 · 전기뱀장어 · 타루 외"
+    },
+    {
+      title: "그랜드 민트 페스티벌 2026 (GMF)",
+      start: "2026-10-17",
+      end: "2026-10-18",
+      venue: "올림픽공원 (88잔디마당 · KSPO DOME 외)",
+      genre: "페스티벌",
+      genreKey: "festival",
+      note: "매년 10월 열리는 가을 대표 인디 음악 축제",
+      lineup: "로이킴 · 장기하 · 페퍼톤스 · 적재 · 카더가든 · CNBLUE · 윤하 · N.Flying 외"
+    }
+  ];
+
+  const GENRES = [
+    { key: "all", label: "전체" },
+    { key: "ballad", label: "발라드 · 트로트" },
+    { key: "overseas", label: "내한공연" },
+    { key: "festival", label: "페스티벌" },
+    { key: "indie", label: "인디 · 포크" }
+  ];
+
+  const MONTHS = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+
+  let activeGenre = "all";
+  let query = "";
+
+  const chipsEl = document.getElementById("chips");
+  const listEl = document.getElementById("list");
+  const countEl = document.getElementById("count");
+  const searchInput = document.getElementById("searchInput");
+
+  function renderChips(){
+    chipsEl.innerHTML = "";
+    GENRES.forEach(g => {
+      const btn = document.createElement("button");
+      btn.className = "chip" + (g.key === activeGenre ? " active" : "");
+      btn.textContent = g.label;
+      btn.addEventListener("click", () => {
+        activeGenre = g.key;
+        renderChips();
+        renderList();
+      });
+      chipsEl.appendChild(btn);
+    });
+  }
+
+  function dayInfo(dateStr){
+    const d = new Date(dateStr + "T00:00:00");
+    return { day: d.getDate(), mon: MONTHS[d.getMonth()] };
+  }
+
+  function ddayLabel(startStr, endStr){
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const start = new Date(startStr + "T00:00:00");
+    const end = new Date(endStr + "T00:00:00");
+    const diffStart = Math.round((start - today) / 86400000);
+    if (end < today) return { text: "공연 종료", done: true };
+    if (diffStart > 0) return { text: "D-" + diffStart, done: false };
+    if (diffStart === 0) return { text: "D-DAY", done: false };
+    return { text: "공연 중", done: false };
+  }
+
+  function renderList(){
+    const filtered = CONCERTS.filter(c => {
+      const matchGenre = activeGenre === "all" || c.genreKey === activeGenre;
+      const q = query.trim().toLowerCase();
+      const matchQuery = !q ||
+        c.title.toLowerCase().includes(q) ||
+        c.venue.toLowerCase().includes(q);
+      return matchGenre && matchQuery;
+    }).sort((a,b) => new Date(a.start) - new Date(b.start));
+
+    countEl.textContent = filtered.length + "개의 공연";
+    listEl.innerHTML = "";
+
+    if (filtered.length === 0){
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.textContent = "조건에 맞는 공연이 없어요.";
+      listEl.appendChild(empty);
+      return;
+    }
+
+    filtered.forEach(c => {
+      const { day, mon } = dayInfo(c.start);
+      const dday = ddayLabel(c.start, c.end);
+      const dateRange = c.start === c.end
+        ? c.start.slice(5).replace("-", ".")
+        : c.start.slice(5).replace("-", ".") + " – " + c.end.slice(5).replace("-", ".");
+
+      const row = document.createElement("div");
+      row.className = "row" + (dday.done ? " past" : "");
+      row.innerHTML = `
+        <div class="date-block">
+          <div class="day">${day}</div>
+          <div class="mon">${mon}</div>
+        </div>
+        <div class="perf"></div>
+        <div class="info">
+          <h3>${c.title}</h3>
+          <div class="meta">
+            <span>${dateRange}</span>
+            <span class="dot">${c.venue}</span>
+            <span class="dot"><span class="tag">${c.genre}</span></span>
+          </div>
+          ${c.lineup ? `<div class="lineup">${c.lineup}</div>` : `<div class="lineup">${c.note}</div>`}
+        </div>
+        <div class="side">
+          <div class="dday${dday.done ? " done" : ""}">${dday.text}</div>
+        </div>
+      `;
+      listEl.appendChild(row);
+    });
+  }
+
+  searchInput.addEventListener("input", (e) => {
+    query = e.target.value;
+    renderList();
+  });
+
+  renderChips();
+  renderList();
+
+  // ---------- PWA: install prompt ----------
+  const installBtn = document.getElementById("installBtn");
+  let deferredPrompt = null;
+
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.hidden = false;
+  });
+
+  installBtn.addEventListener("click", async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    installBtn.hidden = true;
+  });
+
+  window.addEventListener("appinstalled", () => {
+    installBtn.hidden = true;
+  });
+
+  // ---------- PWA: service worker ----------
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
