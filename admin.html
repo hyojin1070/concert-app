@@ -185,26 +185,26 @@
       <h2 id="formTitle">새 공연 추가</h2>
       <form id="concertForm">
         <label>공연명</label>
-        <input type="text" id="f_title" required />
+        <input type="text" id="f_title" tabindex="1" required />
 
         <div class="row2">
           <div>
             <label>시작일</label>
-            <input type="date" id="f_start" required />
+            <input type="date" id="f_start" tabindex="2" required />
           </div>
           <div>
-            <label>종료일</label>
-            <input type="date" id="f_end" required />
+            <label>종료일 <span style="color:var(--ink-dim); font-weight:400;">(선택, 비우면 시작일과 동일)</span></label>
+            <input type="date" id="f_end" tabindex="3" />
           </div>
         </div>
 
         <label>공연장</label>
-        <input type="text" id="f_venue" required />
+        <input type="text" id="f_venue" tabindex="4" required />
 
         <div class="row2">
           <div>
             <label>장르 카테고리</label>
-            <select id="f_genreKey">
+            <select id="f_genreKey" tabindex="5">
               <option value="ballad">발라드 · 트로트</option>
               <option value="overseas">내한공연</option>
               <option value="festival">페스티벌</option>
@@ -215,19 +215,19 @@
           </div>
           <div>
             <label>장르 표시 텍스트</label>
-            <input type="text" id="f_genre" placeholder="예: 발라드 · 트로트" />
+            <input type="text" id="f_genre" tabindex="6" placeholder="예: 발라드 · 트로트" />
           </div>
         </div>
 
         <label>한 줄 설명 (note)</label>
-        <textarea id="f_note" placeholder="예: 3일 전석 지정석 · NOL 티켓 단독 판매"></textarea>
+        <textarea id="f_note" tabindex="7" placeholder="예: 3일 전석 지정석 · NOL 티켓 단독 판매"></textarea>
 
         <label>라인업 (선택, 페스티벌인 경우)</label>
-        <textarea id="f_lineup" placeholder="예: 아티스트A · 아티스트B · 아티스트C"></textarea>
+        <textarea id="f_lineup" tabindex="8" placeholder="예: 아티스트A · 아티스트B · 아티스트C"></textarea>
 
         <div class="form-actions">
-          <button type="submit" class="btn" id="submitBtn">추가하기</button>
-          <button type="button" class="btn secondary" id="cancelEditBtn" hidden>취소</button>
+          <button type="submit" class="btn" id="submitBtn" tabindex="9">추가하기</button>
+          <button type="button" class="btn secondary" id="cancelEditBtn" tabindex="10" hidden>취소</button>
         </div>
       </form>
     </div>
@@ -345,7 +345,7 @@
       const data = {
         title: f_title.value.trim(),
         start: f_start.value,
-        end: f_end.value || f_start.value,
+        end: f_end.value || "",
         venue: f_venue.value.trim(),
         genreKey: f_genreKey.value,
         genre: f_genre.value.trim() || GENRE_LABELS[f_genreKey.value],
@@ -389,7 +389,7 @@
         row.innerHTML = `
           <div class="item-info">
             <h3>${c.title || "(제목 없음)"}</h3>
-            <p>${c.start || "?"} ~ ${c.end || "?"} · ${c.venue || ""} · ${c.genre || ""}</p>
+            <p>${c.start || "?"} ~ ${c.end || "오픈런"} · ${c.venue || ""} · ${c.genre || ""}</p>
           </div>
           <div class="item-actions">
             <button class="icon-btn" data-action="edit">수정</button>

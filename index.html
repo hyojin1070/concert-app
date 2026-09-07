@@ -414,8 +414,15 @@
     const today = new Date();
     today.setHours(0,0,0,0);
     const start = new Date(startStr + "T00:00:00");
-    const end = new Date(endStr + "T00:00:00");
     const diffStart = Math.round((start - today) / 86400000);
+
+    if (!endStr){
+      // 오픈런: 종료일이 정해지지 않은 공연
+      if (diffStart > 0) return { text: "D-" + diffStart, done: false };
+      return { text: "오픈런", done: false };
+    }
+
+    const end = new Date(endStr + "T00:00:00");
     if (end < today) return { text: "공연 종료", done: true };
     if (diffStart > 0) return { text: "D-" + diffStart, done: false };
     if (diffStart === 0) return { text: "D-DAY", done: false };
@@ -456,9 +463,11 @@
     visible.forEach(c => {
       const { day, mon } = dayInfo(c.start);
       const dday = ddayLabel(c.start, c.end);
-      const dateRange = c.start === c.end
-        ? c.start.slice(5).replace("-", ".")
-        : c.start.slice(5).replace("-", ".") + " – " + c.end.slice(5).replace("-", ".");
+      const dateRange = !c.end
+        ? c.start.slice(5).replace("-", ".") + " · 오픈런"
+        : c.start === c.end
+          ? c.start.slice(5).replace("-", ".")
+          : c.start.slice(5).replace("-", ".") + " – " + c.end.slice(5).replace("-", ".");
 
       const row = document.createElement("div");
       row.className = "row" + (dday.done ? " past" : "");
