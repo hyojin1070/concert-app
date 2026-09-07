@@ -249,6 +249,9 @@
   const pwInput = document.getElementById("pwInput");
   const gateError = document.getElementById("gateError");
 
+  let editingId = null;
+  let adminInitialized = false;
+
   function tryLogin(){
     const val = pwInput.value;
     const correct = (typeof ADMIN_PASSWORD !== "undefined") ? ADMIN_PASSWORD : "concert2026";
@@ -281,9 +284,6 @@
   } catch (err) {
     console.warn("Firebase 초기화 실패:", err);
   }
-
-  let editingId = null;
-  let adminInitialized = false;
 
   function initAdmin(){
     if (adminInitialized) return;
