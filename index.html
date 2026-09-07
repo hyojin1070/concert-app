@@ -225,6 +225,15 @@
     font-size: 14px;
   }
 
+  .sentinel{ height: 1px; }
+  .load-more{
+    text-align: center;
+    padding: 22px 0;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-dim);
+  }
+
   footer{
     margin-top: 40px;
     padding-top: 20px;
@@ -323,6 +332,25 @@
       genreKey: "festival",
       note: "매년 10월 열리는 가을 대표 인디 음악 축제",
       lineup: "로이킴 · 장기하 · 페퍼톤스 · 적재 · 카더가든 · CNBLUE · 윤하 · N.Flying 외"
+    },
+    {
+      title: "2026 부산국제록페스티벌",
+      start: "2026-10-02",
+      end: "2026-10-04",
+      venue: "삼락생태공원 (부산)",
+      genre: "록",
+      genreKey: "rock",
+      note: "국내 최장수 국제 록 페스티벌 · 국내외 아티스트 18개 팀 출연",
+      lineup: "Avenged Sevenfold · Megadeth 외 국내외 라인업"
+    },
+    {
+      title: "2026 렛츠락 페스티벌",
+      start: "2026-10-03",
+      end: "2026-10-04",
+      venue: "난지한강공원",
+      genre: "록",
+      genreKey: "rock",
+      note: "2007년 시작, 20주년을 맞은 도심형 록 페스티벌"
     }
   ];
 
@@ -331,13 +359,17 @@
     { key: "ballad", label: "발라드 · 트로트" },
     { key: "overseas", label: "내한공연" },
     { key: "festival", label: "페스티벌" },
-    { key: "indie", label: "인디 · 포크" }
+    { key: "indie", label: "인디 · 포크" },
+    { key: "rock", label: "록" }
   ];
 
   const MONTHS = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
 
   let activeGenre = "all";
   let query = "";
+  const PAGE_SIZE = 3;
+  let visibleCount = PAGE_SIZE;
+  let scrollObserver = null;
 
   const chipsEl = document.getElementById("chips");
   const listEl = document.getElementById("list");
@@ -352,6 +384,7 @@
       btn.textContent = g.label;
       btn.addEventListener("click", () => {
         activeGenre = g.key;
+        visibleCount = PAGE_SIZE;
         renderChips();
         renderList();
       });
@@ -376,8 +409,8 @@
     return { text: "공연 중", done: false };
   }
 
-  function renderList(){
-    const filtered = CONCERTS.filter(c => {
+  function getFiltered(){
+    return CONCERTS.filter(c => {
       const matchGenre = activeGenre === "all" || c.genreKey === activeGenre;
       const q = query.trim().toLowerCase();
       const matchQuery = !q ||
@@ -385,9 +418,19 @@
         c.venue.toLowerCase().includes(q);
       return matchGenre && matchQuery;
     }).sort((a,b) => new Date(a.start) - new Date(b.start));
+  }
+
+  function renderList(){
+    const filtered = getFiltered();
+    const visible = filtered.slice(0, visibleCount);
 
     countEl.textContent = filtered.length + "개의 공연";
     listEl.innerHTML = "";
+
+    if (scrollObserver){
+      scrollObserver.disconnect();
+      scrollObserver = null;
+    }
 
     if (filtered.length === 0){
       const empty = document.createElement("div");
@@ -397,7 +440,7 @@
       return;
     }
 
-    filtered.forEach(c => {
+    visible.forEach(c => {
       const { day, mon } = dayInfo(c.start);
       const dday = ddayLabel(c.start, c.end);
       const dateRange = c.start === c.end
@@ -427,10 +470,34 @@
       `;
       listEl.appendChild(row);
     });
+
+    if (visibleCount < filtered.length){
+      const sentinel = document.createElement("div");
+      sentinel.className = "sentinel";
+      sentinel.setAttribute("aria-hidden", "true");
+      listEl.appendChild(sentinel);
+
+      const loadMore = document.createElement("div");
+      loadMore.className = "load-more";
+      loadMore.textContent = "더 불러오는 중...";
+      listEl.appendChild(loadMore);
+
+      scrollObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting){
+            visibleCount = Math.min(visibleCount + PAGE_SIZE, filtered.length);
+            renderList();
+          }
+        });
+      }, { rootMargin: "200px" });
+
+      scrollObserver.observe(sentinel);
+    }
   }
 
   searchInput.addEventListener("input", (e) => {
     query = e.target.value;
+    visibleCount = PAGE_SIZE;
     renderList();
   });
 
