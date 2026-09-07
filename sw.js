@@ -1,7 +1,9 @@
-const CACHE_NAME = "concert-list-v2";
+const CACHE_NAME = "concert-list-v3";
 const ASSETS = [
   "./index.html",
+  "./admin.html",
   "./manifest.json",
+  "./firebase-config.js",
   "./icon-192.png",
   "./icon-512.png"
 ];

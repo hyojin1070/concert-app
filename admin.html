@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>관리자 — 콘서트 리스트</title>
+<meta name="theme-color" content="#17131c">
+<link rel="icon" href="./icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="./firebase-config.js"></script>
+<style>
+  :root{
+    --bg: #17131c;
+    --surface: #1f1926;
+    --surface-2: #251e2e;
+    --line: #3a3145;
+    --ink: #f4efe9;
+    --ink-dim: #a79bb0;
+    --gold: #e3b23c;
+    --coral: #e8604a;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+  }
+  a{ color: var(--gold); }
+  .wrap{ max-width: 720px; margin: 0 auto; padding: 48px 20px 80px; }
+
+  h1{
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 32px;
+    margin: 0 0 6px;
+    font-weight: 400;
+  }
+  .sub{ color: var(--ink-dim); font-size: 14px; margin: 0 0 32px; }
+
+  /* ---------- Gate ---------- */
+  .gate{
+    max-width: 360px;
+    margin: 80px auto;
+    text-align: center;
+  }
+  .gate input{
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--ink);
+    font-size: 15px;
+    margin-bottom: 12px;
+  }
+  .gate button, .btn{
+    background: var(--gold);
+    border: none;
+    color: #1c1610;
+    font-weight: 700;
+    padding: 12px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  .gate-error{ color: var(--coral); font-size: 13px; margin-top: 10px; min-height: 18px; }
+
+  /* ---------- Status ---------- */
+  .status{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-dim);
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    margin-bottom: 24px;
+  }
+  .status.error{ color: var(--coral); border-color: var(--coral); }
+
+  /* ---------- Form ---------- */
+  .card{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 32px;
+  }
+  .card h2{
+    font-family: 'Black Han Sans', sans-serif;
+    font-weight: 400;
+    font-size: 20px;
+    margin: 0 0 18px;
+  }
+  label{
+    display:block;
+    font-size: 12px;
+    color: var(--ink-dim);
+    margin-bottom: 6px;
+    margin-top: 14px;
+  }
+  label:first-of-type{ margin-top: 0; }
+  input[type="text"], input[type="date"], select, textarea{
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--ink);
+    font-size: 14px;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  textarea{ resize: vertical; min-height: 56px; }
+  .row2{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .form-actions{ margin-top: 20px; display:flex; gap: 10px; }
+  .btn.secondary{
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink-dim);
+  }
+
+  /* ---------- List ---------- */
+  .item{
+    display:flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px dashed var(--line);
+  }
+  .item-info h3{
+    font-family: 'Black Han Sans', sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    margin: 0 0 4px;
+  }
+  .item-info p{
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--ink-dim);
+  }
+  .item-actions{ display:flex; gap: 8px; flex-shrink:0; }
+  .icon-btn{
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink-dim);
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  .icon-btn:hover{ border-color: var(--gold); color: var(--ink); }
+  .icon-btn.danger:hover{ border-color: var(--coral); color: var(--coral); }
+
+  .empty{ color: var(--ink-dim); font-size: 14px; padding: 20px 0; text-align: center; }
+
+  footer{ margin-top: 20px; font-size: 12px; color: #6f6579; }
+</style>
+</head>
+<body>
+
+  <!-- 비밀번호 게이트 -->
+  <div class="wrap gate" id="gateView">
+    <h1>관리자 로그인</h1>
+    <p class="sub">비밀번호를 입력하세요</p>
+    <input type="text" id="pwInput" placeholder="비밀번호" />
+    <button onclick="tryLogin()">입장</button>
+    <div class="gate-error" id="gateError"></div>
+  </div>
+
+  <!-- 관리자 본문 -->
+  <div class="wrap" id="adminView" hidden>
+    <h1>콘서트 관리</h1>
+    <p class="sub"><a href="./index.html">← 목록으로 돌아가기</a></p>
+
+    <div class="status" id="dbStatus">DB 연결 확인 중...</div>
+
+    <div class="card">
+      <h2 id="formTitle">새 공연 추가</h2>
+      <form id="concertForm">
+        <label>공연명</label>
+        <input type="text" id="f_title" required />
+
+        <div class="row2">
+          <div>
+            <label>시작일</label>
+            <input type="date" id="f_start" required />
+          </div>
+          <div>
+            <label>종료일</label>
+            <input type="date" id="f_end" required />
+          </div>
+        </div>
+
+        <label>공연장</label>
+        <input type="text" id="f_venue" required />
+
+        <div class="row2">
+          <div>
+            <label>장르 카테고리</label>
+            <select id="f_genreKey">
+              <option value="ballad">발라드 · 트로트</option>
+              <option value="overseas">내한공연</option>
+              <option value="festival">페스티벌</option>
+              <option value="indie">인디 · 포크</option>
+              <option value="rock">록</option>
+              <option value="etc">기타</option>
+            </select>
+          </div>
+          <div>
+            <label>장르 표시 텍스트</label>
+            <input type="text" id="f_genre" placeholder="예: 발라드 · 트로트" />
+          </div>
+        </div>
+
+        <label>한 줄 설명 (note)</label>
+        <textarea id="f_note" placeholder="예: 3일 전석 지정석 · NOL 티켓 단독 판매"></textarea>
+
+        <label>라인업 (선택, 페스티벌인 경우)</label>
+        <textarea id="f_lineup" placeholder="예: 아티스트A · 아티스트B · 아티스트C"></textarea>
+
+        <div class="form-actions">
+          <button type="submit" class="btn" id="submitBtn">추가하기</button>
+          <button type="button" class="btn secondary" id="cancelEditBtn" hidden>취소</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>등록된 공연 <span id="itemCount" style="color:var(--ink-dim); font-weight:400; font-size:14px;"></span></h2>
+      <div id="itemList"></div>
+    </div>
+
+    <footer>
+      비밀번호는 firebase-config.js 안의 ADMIN_PASSWORD 값을 바꿔서 변경할 수 있어요. 클라이언트 코드에 그대로 노출되니, 정말 중요한 데이터 보호용으로는 쓰지 마세요.
+    </footer>
+  </div>
+
+<script>
+  // ---------- 로그인 게이트 ----------
+  const gateView = document.getElementById("gateView");
+  const adminView = document.getElementById("adminView");
+  const pwInput = document.getElementById("pwInput");
+  const gateError = document.getElementById("gateError");
+
+  function tryLogin(){
+    const val = pwInput.value;
+    const correct = (typeof ADMIN_PASSWORD !== "undefined") ? ADMIN_PASSWORD : "concert2026";
+    if (val === correct){
+      sessionStorage.setItem("concert_admin_ok", "1");
+      gateView.hidden = true;
+      adminView.hidden = false;
+      initAdmin();
+    } else {
+      gateError.textContent = "비밀번호가 올바르지 않아요.";
+    }
+  }
+  pwInput.addEventListener("keydown", (e) => { if (e.key === "Enter") tryLogin(); });
+
+  if (sessionStorage.getItem("concert_admin_ok") === "1"){
+    gateView.hidden = true;
+    adminView.hidden = false;
+    initAdmin();
+  }
+
+  // ---------- Firebase ----------
+  let db = null;
+  let firebaseReady = false;
+  try {
+    if (typeof firebaseConfig !== "undefined" && firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY") {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      firebaseReady = true;
+    }
+  } catch (err) {
+    console.warn("Firebase 초기화 실패:", err);
+  }
+
+  let editingId = null;
+  let adminInitialized = false;
+
+  function initAdmin(){
+    if (adminInitialized) return;
+    adminInitialized = true;
+
+    const dbStatus = document.getElementById("dbStatus");
+    const form = document.getElementById("concertForm");
+    const itemList = document.getElementById("itemList");
+    const itemCount = document.getElementById("itemCount");
+    const submitBtn = document.getElementById("submitBtn");
+    const cancelEditBtn = document.getElementById("cancelEditBtn");
+    const formTitle = document.getElementById("formTitle");
+
+    const f_title = document.getElementById("f_title");
+    const f_start = document.getElementById("f_start");
+    const f_end = document.getElementById("f_end");
+    const f_venue = document.getElementById("f_venue");
+    const f_genreKey = document.getElementById("f_genreKey");
+    const f_genre = document.getElementById("f_genre");
+    const f_note = document.getElementById("f_note");
+    const f_lineup = document.getElementById("f_lineup");
+
+    const GENRE_LABELS = {
+      ballad: "발라드 · 트로트",
+      overseas: "내한공연",
+      festival: "페스티벌",
+      indie: "인디 · 포크",
+      rock: "록",
+      etc: "기타"
+    };
+
+    f_genreKey.addEventListener("change", () => {
+      if (!f_genre.value || Object.values(GENRE_LABELS).includes(f_genre.value)){
+        f_genre.value = GENRE_LABELS[f_genreKey.value] || "";
+      }
+    });
+
+    if (!firebaseReady){
+      dbStatus.textContent = "⚠ DB(Firestore)가 연결되어 있지 않아요. firebase-config.js에 프로젝트 정보를 채워주세요.";
+      dbStatus.classList.add("error");
+      form.querySelectorAll("input, textarea, select, button").forEach(el => el.disabled = true);
+      return;
+    }
+
+    dbStatus.textContent = "DB 연결됨 · 실시간 반영 중";
+
+    function resetForm(){
+      editingId = null;
+      form.reset();
+      formTitle.textContent = "새 공연 추가";
+      submitBtn.textContent = "추가하기";
+      cancelEditBtn.hidden = true;
+    }
+
+    cancelEditBtn.addEventListener("click", resetForm);
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const data = {
+        title: f_title.value.trim(),
+        start: f_start.value,
+        end: f_end.value || f_start.value,
+        venue: f_venue.value.trim(),
+        genreKey: f_genreKey.value,
+        genre: f_genre.value.trim() || GENRE_LABELS[f_genreKey.value],
+        note: f_note.value.trim(),
+        lineup: f_lineup.value.trim()
+      };
+
+      submitBtn.disabled = true;
+      try {
+        if (editingId){
+          await db.collection("concerts").doc(editingId).update(data);
+        } else {
+          await db.collection("concerts").add(data);
+        }
+        resetForm();
+      } catch (err){
+        alert("저장에 실패했어요: " + err.message);
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    db.collection("concerts").onSnapshot((snapshot) => {
+      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      items.sort((a,b) => (a.start || "").localeCompare(b.start || ""));
+
+      itemCount.textContent = "(" + items.length + ")";
+      itemList.innerHTML = "";
+
+      if (items.length === 0){
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = "아직 등록된 공연이 없어요.";
+        itemList.appendChild(empty);
+        return;
+      }
+
+      items.forEach(c => {
+        const row = document.createElement("div");
+        row.className = "item";
+        row.innerHTML = `
+          <div class="item-info">
+            <h3>${c.title || "(제목 없음)"}</h3>
+            <p>${c.start || "?"} ~ ${c.end || "?"} · ${c.venue || ""} · ${c.genre || ""}</p>
+          </div>
+          <div class="item-actions">
+            <button class="icon-btn" data-action="edit">수정</button>
+            <button class="icon-btn danger" data-action="delete">삭제</button>
+          </div>
+        `;
+        row.querySelector('[data-action="edit"]').addEventListener("click", () => {
+          editingId = c.id;
+          f_title.value = c.title || "";
+          f_start.value = c.start || "";
+          f_end.value = c.end || "";
+          f_venue.value = c.venue || "";
+          f_genreKey.value = c.genreKey || "etc";
+          f_genre.value = c.genre || "";
+          f_note.value = c.note || "";
+          f_lineup.value = c.lineup || "";
+          formTitle.textContent = "공연 수정";
+          submitBtn.textContent = "수정 완료";
+          cancelEditBtn.hidden = false;
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+        row.querySelector('[data-action="delete"]').addEventListener("click", async () => {
+          if (!confirm(`"${c.title}" 공연을 삭제할까요?`)) return;
+          try {
+            await db.collection("concerts").doc(c.id).delete();
+          } catch (err){
+            alert("삭제에 실패했어요: " + err.message);
+          }
+        });
+        itemList.appendChild(row);
+      });
+    }, (err) => {
+      dbStatus.textContent = "⚠ DB 연결 오류: " + err.message;
+      dbStatus.classList.add("error");
+    });
+  }
+</script>
+</body>
+</html>

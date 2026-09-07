@@ -13,6 +13,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="./firebase-config.js"></script>
 <style>
   :root{
     --bg: #17131c;
@@ -134,6 +137,12 @@
     font-size: 12px;
     color: var(--ink-dim);
     margin: 0 0 6px;
+  }
+  .sync-status{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: #6f6579;
+    margin: 0 0 16px;
   }
   .list{
     border-top: 1px dashed var(--line);
@@ -276,15 +285,17 @@
     </div>
 
     <p class="count" id="count"></p>
+    <p class="sync-status" id="syncStatus"></p>
     <div class="list" id="list"></div>
 
     <footer>
       실제 티켓 오픈 공지를 바탕으로 정리한 참고용 목록이며, 정확한 좌석·가격·취소 규정은 각 공연 공식 예매처에서 확인하세요.
+      <br><a href="./admin.html">관리자 페이지 →</a>
     </footer>
   </div>
 
 <script>
-  const CONCERTS = [
+  const FALLBACK_CONCERTS = [
     {
       title: "2026 임영웅 콘서트 [IM HERO – THE STADIUM 2]",
       start: "2026-09-04",
@@ -365,6 +376,7 @@
 
   const MONTHS = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
 
+  let CONCERTS = [...FALLBACK_CONCERTS];
   let activeGenre = "all";
   let query = "";
   const PAGE_SIZE = 3;
@@ -375,6 +387,7 @@
   const listEl = document.getElementById("list");
   const countEl = document.getElementById("count");
   const searchInput = document.getElementById("searchInput");
+  const syncStatusEl = document.getElementById("syncStatus");
 
   function renderChips(){
     chipsEl.innerHTML = "";
@@ -501,8 +514,54 @@
     renderList();
   });
 
-  renderChips();
-  renderList();
+  // ---------- DB(Firestore) 연동 ----------
+  let db = null;
+  let firebaseReady = false;
+
+  try {
+    if (typeof firebaseConfig !== "undefined" && firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY") {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      firebaseReady = true;
+    }
+  } catch (err) {
+    console.warn("Firebase 초기화 실패:", err);
+  }
+
+  function startSync(){
+    if (!firebaseReady){
+      syncStatusEl.textContent = "기본 목록으로 표시 중 (DB 미연결 — firebase-config.js를 설정하면 실시간 목록으로 전환됩니다)";
+      renderChips();
+      renderList();
+      return;
+    }
+
+    syncStatusEl.textContent = "DB에 연결하는 중...";
+
+    db.collection("concerts").onSnapshot(
+      (snapshot) => {
+        if (snapshot.empty){
+          CONCERTS = [...FALLBACK_CONCERTS];
+          syncStatusEl.textContent = "DB에 등록된 공연이 아직 없어 기본 목록을 보여드려요. 관리자 페이지에서 추가해보세요.";
+        } else {
+          CONCERTS = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          syncStatusEl.textContent = "DB와 실시간으로 연결됨 · " + CONCERTS.length + "개 등록";
+        }
+        visibleCount = PAGE_SIZE;
+        renderChips();
+        renderList();
+      },
+      (err) => {
+        console.warn("Firestore 불러오기 실패:", err);
+        CONCERTS = [...FALLBACK_CONCERTS];
+        syncStatusEl.textContent = "DB 연결 실패 — 기본 목록으로 표시 중";
+        renderChips();
+        renderList();
+      }
+    );
+  }
+
+  startSync();
 
   // ---------- PWA: install prompt ----------
   const installBtn = document.getElementById("installBtn");
